@@ -153,7 +153,7 @@ class RectangularCurvedUnit:
             def render_central_curve(t):
                 return render_curve(
                     t,
-                    0.33 * width,
+                    0.32 * width,
                     0.5 * width,
                     curve_endpoint.y,
                     height * 0.5,
@@ -163,7 +163,7 @@ class RectangularCurvedUnit:
             def render_second_curve(t):
                 return render_curve(
                     t,
-                    0.4 * width,
+                    0.39 * width,
                     0.75 * width,
                     pocket_endpoint.y,
                     height * 0.48,
@@ -183,11 +183,11 @@ class RectangularCurvedUnit:
             def render_4th_curve(t):
                 return render_curve(
                     t,
-                    0.54 * width,
+                    0.59 * width,
                     0.75 * width,
                     pocket_endpoint.y + height * 0.16,
                     height * 0.36,
-                    height * 0.33,
+                    height * 0.32,
                 )
 
             return [
@@ -268,6 +268,6 @@ def offset_by(point: Vec):
     return Matrix([[1, 0, point.x], [0, 1, point.y], [0, 0, 1]])
 
 
-unit = RectangularCurvedUnit(length_ratio=4, end_angle=15, pocket_angle=40)
+unit = RectangularCurvedUnit(length_ratio=3, end_angle=15, pocket_angle=50)
 with open("testunit.svg", "w") as f:
     f.write(unit.render_sheet(200, 6).as_str())
