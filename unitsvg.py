@@ -23,6 +23,16 @@ class Vec:
         yield self.y
 
 
+class Line:
+    def __init__(self, x1, y1, x2, y2):
+        self.v1 = Vec(x1, y1)
+        self.v2 = Vec(x2, y2)
+
+    def __init__(self, v1, v2):
+        self.v1 = v1
+        self.v2 = v2
+
+
 # supports quick unpacking for svg funcs
 # Also supports readers thinking "why would you do this??"
 def v(v: Vec):
@@ -37,10 +47,16 @@ def v2(v: Vec):
     return {"x2": v.x, "y2": v.y}
 
 
+def l(l: Line):
+    return {**v1(l.v1), **v2(l.v2)}
+
+
 border = "#000000"
 mountain = "#ff00ff"
 valley = "#ff00ff"
 
+def lerp(a, b, n):
+    return b * n + (1-n) * a
 
 def common_elements():
     return [
@@ -101,28 +117,84 @@ class RectangularCurvedUnit:
     def _render_elements(self, width, offset: Vec):
         height = self.height(width)
         end_direction = Vec(1, math.tan(math.radians(self.end_angle)))
+        pocket_direction = Vec(1, math.tan(math.radians(90 - self.pocket_angle)))
 
         def render_half(t):
             curve_endpoint = end_direction * width * 0.5
+            pocket_endpoint = curve_endpoint + pocket_direction * width * 0.25
+            pocket_line = Line(t * curve_endpoint, t * pocket_endpoint)
+            left_bookcase = Line(
+                t * (curve_endpoint * 0.5), t * Vec(width * 0.25, height * 0.5)
+            )
+            right_bookcase = Line(
+                t * pocket_endpoint, t * Vec(width * 0.75, height * 0.5)
+            )
+
+            def render_curve(t, centre_x, end_x, y1, y2, centre_y):
+                return [
+                    svg.Path(  # Central curve
+                        class_=["valley"],
+                        d=[
+                            svg.MoveTo(*(t * Vec(end_x, y1))),
+                            svg.CubicBezier(
+                                **v1(t * Vec(lerp(end_x, centre_x, 0.8), lerp(y1, centre_y, 0.4))),
+                                **v2(t * Vec(centre_x, lerp(y1, centre_y, 0.6))),
+                                **v(t * Vec(centre_x, centre_y))
+                            ),
+                            svg.SmoothCubicBezier(
+                                **v2(t * Vec(centre_x, (y2 - height * 0.025))),
+                                **v(t * Vec(end_x, y2))
+                            ),
+                        ],
+                    )
+                ]
+
+            def render_central_curve(t):
+                return render_curve(
+                    t,
+                    0.28 * width,
+                    0.5 * width,
+                    curve_endpoint.y,
+                    height * 0.5,
+                    height * 0.35,
+                )
+
+            def render_second_curve(t):
+                return render_curve(
+                    t,
+                    0.39 * width,
+                    0.75 * width,
+                    pocket_endpoint.y,
+                    height * 0.5,
+                    height * 0.35,
+                )
+            
+            
+            def render_third_curve(t):
+                return render_curve(
+                    t,
+                    0.5 * width,
+                    0.75 * width,
+                    pocket_endpoint.y + height * 0.1,
+                    height * 0.45,
+                    height * 0.35,
+                )
+
             return [
-                svg.Line(
+                svg.Line(  # Skew unit end line
                     class_=["valley"], **v1(t * Vec(0, 0)), **v2(t * curve_endpoint)
                 ),
-                svg.Path(
-                    class_=["valley"],
-                    d=[
-                        svg.MoveTo(*(t * curve_endpoint)),
-                        svg.CubicBezier(
-                            **v1(t * Vec(width * 0.25, height * 0.2)),
-                            **v2(t * Vec(width * 0.25, height * 0.3)),
-                            **v(t * Vec(width * 0.25, height * 0.35))
-                        ),
-                        svg.SmoothCubicBezier(
-                            **v2(t * Vec(width * 0.25, height * 0.45)),
-                            **v(t * Vec(width * 0.5, height * 0.5))
-                        ),
-                    ],
-                ),
+                svg.Line(class_=["valley"], **v1(t*Vec(pocket_endpoint.x, 0)), **v2(t*pocket_endpoint)),
+                svg.Line(class_=["valley"], **l(pocket_line)),
+                svg.Line(class_=["valley"], **v1((t@reflect_x_at(width * 0.75))*curve_endpoint), **v2(t* pocket_endpoint)),
+                svg.Line(class_=["valley"], **l(left_bookcase)),
+                svg.Line(class_=["valley"], **l(right_bookcase)),
+                *render_central_curve(t),
+                *render_central_curve(t @ reflect_x_at(width * 0.25)),
+                *render_second_curve(t),
+                *render_second_curve(t @ reflect_x_at(width * 0.75)),
+                *render_third_curve(t),
+                *render_third_curve(t @ reflect_x_at(width * 0.75)),
             ]
 
         return [
@@ -168,10 +240,22 @@ def rotate_around_point(point: Vec, angle_degrees):
     )
 
 
+def reflect_over_line(v1: Vec, v2: Vec):
+    return identity()
+
+
+def reflect_x_at(x):
+    return Matrix([[-1, 0, x * 2], [0, 1, 0], [0, 0, 1]])
+
+
+def reflect_y_at(y):
+    return Matrix([[1, 0, 0], [0, -1, y * 2], [0, 0, 1]])
+
+
 def offset_by(point: Vec):
     return Matrix([[1, 0, point.x], [0, 1, point.y], [0, 0, 1]])
 
 
-unit = RectangularCurvedUnit(length_ratio=4, end_angle=10, pocket_angle=30)
+unit = RectangularCurvedUnit(length_ratio=4, end_angle=15, pocket_angle=30)
 with open("testunit.svg", "w") as f:
-    f.write(unit.render_sheet(200, 6).as_str())
+    f.write(unit.render_sheet(200, 2).as_str())
