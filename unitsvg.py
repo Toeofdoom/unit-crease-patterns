@@ -122,9 +122,9 @@ class RectangularCurvedUnit:
         def render_half(t):
             curve_endpoint = end_direction * width * 0.5
             pocket_endpoint = curve_endpoint + pocket_direction * width * 0.25
-            pocket_line = Line(t * curve_endpoint, t * pocket_endpoint)
+            pocket_line = Line(t * (curve_endpoint + pocket_direction * (-curve_endpoint.y / pocket_direction.y)), t * pocket_endpoint)
             left_bookcase = Line(
-                t * (curve_endpoint * 0.5), t * Vec(width * 0.25, height * 0.5)
+                t * Vec(width * 0.25, 0), t * Vec(width * 0.25, height * 0.5)
             )
             right_bookcase = Line(
                 t * pocket_endpoint, t * Vec(width * 0.75, height * 0.5)
@@ -138,12 +138,12 @@ class RectangularCurvedUnit:
                             svg.MoveTo(*(t * Vec(end_x, y1))),
                             svg.CubicBezier(
                                 **v1(t * Vec(lerp(end_x, centre_x, 0.8), lerp(y1, centre_y, 0.4))),
-                                **v2(t * Vec(centre_x, lerp(y1, centre_y, 0.6))),
+                                **v2(t * Vec(centre_x, lerp(y1, centre_y, 0.7))),
                                 **v(t * Vec(centre_x, centre_y))
                             ),
                             svg.CubicBezier(
                                 **v1(t * Vec(centre_x, lerp(centre_y, y2, 0.4))),
-                                **v2(t * Vec(lerp(end_x, centre_x, 0.8), lerp(centre_y, y2, 0.6))),
+                                **v2(t * Vec(lerp(end_x, centre_x, 0.8), lerp(centre_y, y2, 0.8))),
                                 **v(t * Vec(end_x, y2))
                             ),
                         ],
@@ -157,7 +157,7 @@ class RectangularCurvedUnit:
                     0.5 * width,
                     curve_endpoint.y,
                     height * 0.5,
-                    height * 0.33,
+                    height * 0.36,
                 )
 
             def render_second_curve(t):
@@ -167,20 +167,20 @@ class RectangularCurvedUnit:
                     0.75 * width,
                     pocket_endpoint.y,
                     height * 0.48,
-                    height * 0.33,
+                    height * 0.36,
                 )
             
             
             def render_third_curve(t):
                 return render_curve(
                     t,
-                    0.47 * width,
+                    0.57 * width,
                     0.75 * width,
-                    pocket_endpoint.y + height * 0.09,
-                    height * 0.42,
-                    height * 0.33,
+                    pocket_endpoint.y,
+                    height * 0.48,
+                    height * 0.36,
                 )
-            def render_4th_curve(t):
+            """def render_4th_curve(t):
                 return render_curve(
                     t,
                     0.59 * width,
@@ -188,12 +188,9 @@ class RectangularCurvedUnit:
                     pocket_endpoint.y + height * 0.16,
                     height * 0.36,
                     height * 0.32,
-                )
+                )"""
 
             return [
-                svg.Line(  # Skew unit end line
-                    class_=["valley"], **v1(t * Vec(0, 0)), **v2(t * curve_endpoint)
-                ),
                 svg.Line(class_=["valley"], **v1(t*Vec(pocket_endpoint.x, 0)), **v2(t*pocket_endpoint)),
                 svg.Line(class_=["valley"], **l(pocket_line)),
                 svg.Line(class_=["valley"], **v1((t@reflect_x_at(width * 0.75))*curve_endpoint), **v2(t* pocket_endpoint)),
@@ -204,9 +201,7 @@ class RectangularCurvedUnit:
                 *render_second_curve(t),
                 *render_second_curve(t @ reflect_x_at(width * 0.75)),
                 *render_third_curve(t),
-                *render_third_curve(t @ reflect_x_at(width * 0.75)),
-                *render_4th_curve(t),
-                *render_4th_curve(t @ reflect_x_at(width * 0.75)),
+                *render_third_curve(t @ reflect_x_at(width * 0.75))
             ]
 
         return [
@@ -268,6 +263,6 @@ def offset_by(point: Vec):
     return Matrix([[1, 0, point.x], [0, 1, point.y], [0, 0, 1]])
 
 
-unit = RectangularCurvedUnit(length_ratio=3, end_angle=15, pocket_angle=50)
+unit = RectangularCurvedUnit(length_ratio=3, end_angle=15, pocket_angle=45)
 with open("testunit.svg", "w") as f:
     f.write(unit.render_sheet(200, 6).as_str())
