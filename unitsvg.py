@@ -593,7 +593,7 @@ def render_cheatsheet(units: List[WireframeUnit], width, padding):
     def x_offset_for(i):
         return (padding + width) * i + padding
 
-    height = max(unit.height(width) for unit in units) * padding * width * 2
+    height = max(unit.height(width) for unit in units) + padding * 2
 
     def unit_elements_for(unit: WireframeUnit, i):
         x = x_offset_for(i)
