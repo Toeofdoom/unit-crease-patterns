@@ -3,45 +3,54 @@ import numpy as np
 import math
 
 img = cv.imread("twolayer_sevenfold_weave_cp-1016x1024.jpg")
-blur_size = 2
 
-img = cv.GaussianBlur(img,(3,3),0)
-blue_bits = cv.inRange(img, (100, 0, 0), (255, 100, 100))
-red_bits = cv.inRange(img, (0, 0, 150), (100, 100, 255))
-red_bits2 = cv.multiply(cv.bitwise_not(cv.multiply(cv.cvtColor(cv.absdiff(img, (0, 0, 255)), cv.COLOR_BGR2GRAY),
-                               3)),8)
-black_bits = cv.inRange(img, (0, 0, 0), (30, 30, 30))
+blue, green, red = cv.split(img)
+not_blue, not_green, not_red= cv.split(cv.bitwise_not(img))
 
-cdst =  np.copy(img)
+def channel_filter(channels: list, shift=25, mul=1.2):
+    current = channels[0]
+    for next_channel in channels[1:]:
+        current = cv.multiply(current, next_channel, scale=1/255)
+    return cv.multiply(cv.subtract(current, shift), mul)
 
-erosion_size=0
-element = cv.getStructuringElement(2, (2 * erosion_size + 1, 2 * erosion_size + 1),
- (erosion_size, erosion_size))
+red_only = channel_filter([red, not_blue, not_green])
+blue_only = channel_filter([blue, not_red, not_green])
+black_only = channel_filter([not_red, not_blue, not_green], 130, 2)
 
 
-cdstP2 = np.copy(img)
+lines = cv.createLineSegmentDetector(cv.LSD_REFINE_ADV)
+red_lines, widths, somethings, blah = lines.detect(red_only)
+blue_lines, widths, somethings, blah = lines.detect(blue_only)
+black_lines, widths, somethings, blah = lines.detect(black_only)
 
-blue_lines = cv.HoughLinesP(cv.erode(blue_bits, element), 1, np.pi / 180, 5, None, 10, 8)
-print(len(blue_lines))
-for i in range(0, len(blue_lines)):
-    l = blue_lines[i][0]
-    cv.line(cdstP2, (l[0], l[1]), (l[2], l[3]), (0,255,0), 1, cv.LINE_AA)
+simplified_lines = []
 
-cdstP = np.copy(img)
+def print_lines_on(target, lines):
+    result = np.copy(target)
+    for i in range(0, len(lines)):
+        #if widths[i] > 2:
+        l = lines[i][0]
+        cv.line(
+            result,
+            (int(l[0]), int(l[1])),
+            (int(l[2]), int(l[3])),
+            (0, 255, 0),
+            1,
+            cv.LINE_AA,
+        )
+        cv.circle(result, (int(l[0]), int(l[1])), 5, (0, 0, 255), 1, cv.LINE_AA)
+        cv.circle(result, (int(l[2]), int(l[3])), 5, (0, 0, 255), 1, cv.LINE_AA)
+    return result
 
-red_lines = cv.HoughLinesP(cv.dilate(red_bits2, element), 1, np.pi / 36, 10, None, 10, 5)
-print(len(red_lines))
-for i in range(0, len(red_lines)):
-    l = red_lines[i][0]
-    cv.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,255,0), 1, cv.LINE_AA)
 
-#cv.imshow("Original", img)
-cv.imshow("Red", red_bits)
-cv.imshow("Red_ish", red_bits2)
-#cv.imshow("Red lines", cdst)
-cv.imshow("Red lines P", cdstP)
-cv.imshow("Blue lines P", cdstP2)
-#cv.imshow("Blue", blue_bits)
-#cv.imshow("Black", black_bits)
+
+# cv.imshow("Original", img)
+cv.imshow("Red Bits", red_only)
+cv.imshow("Blue Bits", blue_only)
+cv.imshow("Black Bits", black_only)
+cv.imshow("Red Lines", print_lines_on(img, red_lines))
+cv.imshow("Blue Lines", print_lines_on(img, blue_lines))
+cv.imshow("Black Lines", print_lines_on(img, black_lines))
+# cv.imshow("Blue", blue_bits)
+# cv.imshow("Black", black_bits)
 k = cv.waitKey(0)
-
