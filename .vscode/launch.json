@@ -10,7 +10,13 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "justMyCode": true
+            "justMyCode": false
+        },
+        {
+            "name": "Unit SVG",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "unitsvg"
         }
     ]
 }
