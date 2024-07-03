@@ -2,7 +2,6 @@
 from vec import Vec
 import svg
 from line import Line
-from matrix import Matrix
 import numpy
 
 class Bezier:
@@ -44,19 +43,20 @@ class Bezier:
         p = numpy.polynomial.polynomial.Polynomial(coefficients)
         #p.domain = [0., 1.]
         roots = p.roots()
-        return [r for r in roots if r >= 0 and r <= 1]
+        return [complex(r).real for r in roots if complex(r).real >= 0 and complex(r).real <= 1 and complex(r).imag < 0.01 and complex(r).imag > -0.01]
 
 
-    def _render(self, t: Matrix):
+
+    def _render(self, width, t):
         #Only cubic implemented.
-        svg.Path(
+        return svg.Path(
             class_=["valley"],
             d=[
-                svg.MoveTo(*(t * self.control_points[0])),
+                svg.MoveTo(*(t * (self.control_points[0]))),
                 svg.CubicBezier(
-                    **(t * self.control_points[1]).v1,
-                    **(t * self.control_points[2]).v2,
-                    **(t * self.control_points[3]).v,
+                    **(t * (self.control_points[1])).v1,
+                    **(t * (self.control_points[2])).v2,
+                    **(t * (self.control_points[3])),
                 ),
             ],
         )

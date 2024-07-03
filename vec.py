@@ -8,9 +8,20 @@ class Vec:
     def copy(self) -> "Vec":
         return Vec(self.x, self.y)
     
+    @property
+    def magnitude(self) -> float:
+        return math.sqrt(self.x * self.x + self.y * self.y)
+    
+    @property
+    def normalised(self) -> float:
+        return self * (1 / self.magnitude)
+    
     def dot(self, other: "Vec") -> float:
         return self.x * other.x + self.y * other.y
-
+    
+    def __neg__(self):
+        return Vec(-self.x, -self.y)
+    
     def __mul__(self, n: float):
         return Vec(self.x * n, self.y * n)
 
@@ -61,3 +72,7 @@ class Vec:
     @property
     def c(self):
         return {"cx": self.x, "cy": self.y}
+    
+    @property
+    def bla(self):
+        return Vec(f"{self.x.value}{self.x.unit}", f"{self.y.value}{self.y.unit}")

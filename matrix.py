@@ -1,14 +1,28 @@
 import math
 from vec import Vec
+from line import Line
+from bezier import Bezier
+
 
 class Matrix:
     def __init__(self, data):
         self.data = data
 
-    def __mul__(self, vec):
-        els = [vec.x, vec.y, 1]
+    def multiply_direction(self, other: Vec):
+        els = [other.x, other.y, 0]
         x, y, _ = [sum([a * b for a, b in zip(els, row)]) for row in self.data]
         return Vec(x, y)
+
+    def __mul__(self, other):
+        if type(other) is Vec:
+            els = [other.x, other.y, 1]
+            x, y, _ = [sum([a * b for a, b in zip(els, row)]) for row in self.data]
+            return Vec(x, y)
+        if type(other) is Line:
+            return Line(self * other.v1, self * other.v2)
+        if type(other) is Bezier:
+            return Bezier([self * v for v in other.control_points])
+        raise Exception()
 
     def __matmul__(self, mat):  # This is almost certainly wrong
         cols = [
@@ -36,8 +50,26 @@ def rotate_around_point(point: Vec, angle_degrees):
     )
 
 
-def reflect_over_line(v1: Vec, v2: Vec):
-    raise Exception("unimplemented")
+def reflect_over_line(l: Line):
+    dir = l.direction.normalised
+    tan = l.tangent.normalised
+    # 0 degrees, (1, 0)
+    # 45 degrees, (sqrt2, sqrt2)
+    # 90 degrees, (0, 1)
+    # dir.x * dot
+    # x * dir.x , y
+    # dir.dot(v) -> maintained
+    # tan.dot(v) -> reflected
+
+    centred_matrix = Matrix(
+        [
+            [dir.x * dir.x - tan.x * tan.x, dir.x * dir.y - tan.x * tan.y, 0],
+            [dir.y * dir.x - tan.y * tan.x, dir.y * dir.y - tan.y * tan.y, 0],
+            [0, 0, 1],
+        ]
+    )
+
+    return offset_by(l.v1) @ centred_matrix @ offset_by(-l.v1)
 
 
 def reflect_x_at(x):

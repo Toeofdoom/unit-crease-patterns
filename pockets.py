@@ -45,16 +45,17 @@ class AutoPocket:
 
             extra_x = 0.25
             extra_y = mid_y + (mid_x - extra_x) * math.tan(extra_angle)
-            extra_vert = t * Vec(width * extra_x, width * extra_y)
-
+            if extra_y < 0:
+                extra_x = mid_y / (mid_y - extra_y) * 0.25
+                extra_y = 0
             lines += [
                 svg.Line(
                     class_=["valley"],
-                    **(Line(t * Vec(width * mid_x, width * mid_y), extra_vert)),
+                    **(Line(t * Vec(width * mid_x, width * mid_y), t * Vec(width * (0.5 - extra_x), width * extra_y))),
                 ),
                 svg.Line(
                     class_=["valley"],
-                    **(Line(extra_vert, t * Vec(svg.mm(0), width * mid_y))),
+                    **(Line(t * Vec(width * extra_x, width * extra_y), t * Vec(svg.mm(0), width * mid_y))),
                 ),
             ]
 

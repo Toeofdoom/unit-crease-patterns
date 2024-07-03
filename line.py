@@ -11,7 +11,20 @@ class Line:
         direction = self.v1 - self.v2
         return math.atan(direction.y / direction.x)
 
-    def intersection(self, other: "Line"):
+    @property
+    def direction(self):
+        return self.v2 - self.v1
+    
+    @property
+    def tangent(self):
+        dir = self.direction
+        return Vec(dir.y, -dir.x)
+    
+    @property
+    def length(self):
+        return (self.v2 - self.v1).magnitude
+    
+    def intersection(self, other: "Line") -> Vec | None:
         xdiff = (self[0][0] - self[1][0], other[0][0] - other[1][0])
         ydiff = (self[0][1] - self[1][1], other[0][1] - other[1][1])
 
@@ -20,7 +33,7 @@ class Line:
 
         div = det(xdiff, ydiff)
         if div == 0:
-            raise Exception("lines do not intersect")
+            return None
 
         d = (det(*self), det(*other))
         x = det(d, xdiff) / div
@@ -57,6 +70,6 @@ class Line:
         d = y * self.v1.y + self.v1.x*x
         return Vec(x, y), d
 
-
+    
 
 

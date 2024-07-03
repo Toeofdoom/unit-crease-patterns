@@ -53,7 +53,7 @@ def render_print_sheet(unit: BaseUnit, width: svg.Length, unit_count: int) -> sv
     ]
 
     for i in range(0, unit_count):
-        elements += unit.render_elements(width, Vec(i * width, 0))
+        elements += unit.render_elements(width, offset_by(Vec(i * width, 0)))
 
     return svg.SVG(
         width=width * unit_count, height=width * unit.length_ratio, elements=elements
@@ -66,6 +66,7 @@ def render_complex_sheet(
     sheet_width: float,
     sheet_height: float,
     width: svg.Length,
+    extra_vertical_units: list[tuple[list[BaseUnit], Vec]] = []
 ) -> svg.SVG:
     elements = [
         common_elements(),
@@ -89,6 +90,11 @@ def render_complex_sheet(
             sheet_height - index - 1,
             sheet_height - index,
         )
+    
+    for units, offset in extra_vertical_units:
+        for index, unit in enumerate(units):
+            elements += unit.render_elements(width, offset * width + Vec(index * width, 0))
+            lines.add_rectangle(offset.x + index, offset.x + index + 1, offset.y, offset.y + unit.length_ratio)
 
     elements += lines.render(width)
 
