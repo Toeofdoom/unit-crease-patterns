@@ -1,4 +1,6 @@
 import math
+import svg
+svg.Length.__neg__ = lambda self: svg.Length(self.value, self.unit)
 
 class Vec:
     def __init__(self, x, y):

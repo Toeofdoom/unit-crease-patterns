@@ -141,29 +141,43 @@ with open("transform_stack_unit.svg", "w") as f:
     reverse_pocket_direction = Vec(-1, math.tan(math.radians(90 - reverse_pocket)))
     reverse_pocket_endpoint = curve_endpoint + reverse_pocket_direction * 0.25
     reverse_pocket_line = Line(
-        curve_endpoint- Vec(0.0001, 0),
+        curve_endpoint - Vec(0.0001, 0),
         reverse_pocket_endpoint,
     )
-    
+
     unit.add_fold(pocket_line, centre)
     unit.add_simple_fold(reverse_pocket_line)
     unit.add_simple_fold(tab_line)
-    unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.23, 1), Vec(0.12, 1.64), centre]))
+    unit.add_bezier_crease(
+        Bezier([pocket_endpoint, Vec(0.23, 1), Vec(0.12, 1.64), centre])
+    )
 
     midpoint = centre + Vec(0.0, -0.1)
     dir = Vec(0.45, 0.55)
-    unit.add_bezier_crease(Bezier([Vec(0.75, 0.76), Vec(0.15, 1.35), midpoint - dir * .3, midpoint]))
-    unit.add_bezier_crease(Bezier([midpoint, midpoint + dir * .25, Vec(0.72, 2.05), Vec(0.76, 2.5)]))
+    unit.add_bezier_crease(
+        Bezier([Vec(0.75, 0.76), Vec(0.15, 1.35), midpoint - dir * 0.3, midpoint])
+    )
+    unit.add_bezier_crease(
+        Bezier([midpoint, midpoint + dir * 0.25, Vec(0.72, 2.05), Vec(0.76, 2.5)])
+    )
 
     midpoint = centre + Vec(0.03, -0.17)
     dir = Vec(0.4, 0.6)
-    unit.add_bezier_crease(Bezier([Vec(0.75, 1.02), Vec(0.34, 1.4), midpoint - dir * .3, midpoint]))
-    unit.add_bezier_crease(Bezier([midpoint, midpoint + dir * .25, Vec(0.73, 1.95), Vec(0.775, 2.5)]))
+    unit.add_bezier_crease(
+        Bezier([Vec(0.75, 1.02), Vec(0.34, 1.4), midpoint - dir * 0.3, midpoint])
+    )
+    unit.add_bezier_crease(
+        Bezier([midpoint, midpoint + dir * 0.25, Vec(0.73, 1.95), Vec(0.775, 2.5)])
+    )
 
     midpoint = centre + Vec(0.1, -0.21)
     dir = Vec(0.4, 0.6)
-    unit.add_bezier_crease(Bezier([Vec(0.75, 1.3), Vec(0.55, 1.4), midpoint - dir * .3, midpoint]))
-    unit.add_bezier_crease(Bezier([midpoint, midpoint + dir * .25, Vec(0.74, 1.95), Vec(0.79, 2.5)]))
+    unit.add_bezier_crease(
+        Bezier([Vec(0.75, 1.3), Vec(0.55, 1.4), midpoint - dir * 0.3, midpoint])
+    )
+    unit.add_bezier_crease(
+        Bezier([midpoint, midpoint + dir * 0.25, Vec(0.74, 1.95), Vec(0.79, 2.5)])
+    )
 
     """unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.2, 1), Vec(0.1, 1.8), centre]))
     unit.add_bezier_crease(Bezier([Vec(1, pocket_endpoint.y+.2), Vec(0.2, 1), Vec(0.1, 2), centre + Vec(0.3, -0.1)]))
@@ -172,8 +186,20 @@ with open("transform_stack_unit.svg", "w") as f:
     f.write(render_print_sheet(unit, 200, 6).as_str())
 
 with open("simplified_curved_unit.svg", "w") as f:
-    unit = TransformStackUnit(length_ratio=4)
-    centre = sum(unit.zones[0].verts, Vec(0, 0)) * (1 / len(unit.zones[0].verts))
+    ratio = 3.4
+    base_narrowing_multiplier = .95
+    centre = Vec(0.5, ratio * 0.5)
+    adjustment_angle = math.atan((1 - base_narrowing_multiplier) / ratio)
+    scaling_factor = 1 / math.cos(adjustment_angle)
+    narrowing_factor = scaling_factor * base_narrowing_multiplier / math.cos(adjustment_angle)
+    narrowed_ratio = ratio / narrowing_factor
+    unit = TransformStackUnit(
+        length_ratio=narrowed_ratio,
+        initial_transform=
+        offset_by(Vec(0, (narrowed_ratio - ratio) * 0.5)) @
+        scale_around_point(centre, scaling_factor/ narrowing_factor)
+        @ rotate_around_point(centre, math.degrees(-adjustment_angle))
+    )
     unit.add_rotational_symmetry(centre)
     unit.add_fold(Line(Vec(0.25, 0), Vec(0.25, unit.length_ratio)), centre)
 
@@ -198,27 +224,40 @@ with open("simplified_curved_unit.svg", "w") as f:
     reverse_pocket_direction = Vec(-1, math.tan(math.radians(90 - reverse_pocket)))
     reverse_pocket_endpoint = curve_endpoint + reverse_pocket_direction * 0.25
     reverse_pocket_line = Line(
-        curve_endpoint- Vec(0.0001, 0),
+        curve_endpoint - Vec(0.0001, 0),
         reverse_pocket_endpoint,
     )
-    
+
     unit.add_fold(pocket_line, centre)
     unit.add_simple_fold(reverse_pocket_line)
     unit.add_simple_fold(tab_line)
-    unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.23, 1), Vec(0.12, 1.64), centre]))
+    unit.add_bezier_crease(
+        Bezier([pocket_endpoint, Vec(0.29, 1), Vec(0.16, 1.34), centre])
+    )
 
-    midpoint = centre + Vec(0.0, -0.1)
+    midpoint = centre + Vec(0.00, -0.1)
     dir = Vec(0.45, 0.55)
-    a = Bezier([Vec(0.75, 0.85), Vec(0.15, 1.35), midpoint - dir * .3, midpoint])
-    b = Bezier([midpoint, midpoint + dir * .25, Vec(0.65, 2.0), Vec(0.75, 2.15)])
+    a = Bezier([pocket_endpoint, Vec(0.32, 1.25), midpoint - dir * 0.1, midpoint])
+    b = Bezier([midpoint, midpoint + dir * 0.25, Vec(0.68, 1.80), Vec(0.75, 1.85)])
     unit.add_bezier_crease(a)
     unit.add_bezier_crease(b)
 
-    shift = 0.5
-    unit.add_bezier_crease(Bezier([Vec(lerp(v.x, 0.75, shift), v.y) for v in a.control_points]))
-    unit.add_bezier_crease(Bezier([Vec(lerp(v.x, 0.75, shift), v.y) for v in b.control_points]))
-
-
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(lerp(v.x, 0.75, shift), v.y)
+                for v, shift in zip(a.control_points, [0.5, 0.45, 0.4, 0.35])
+            ]
+        )
+    )
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(lerp(v.x, 0.75, shift), v.y)
+                for v, shift in zip(b.control_points, [0.35, 0.3, 0.3, 0.5])
+            ]
+        )
+    )
 
     """unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.2, 1), Vec(0.1, 1.8), centre]))
     unit.add_bezier_crease(Bezier([Vec(1, pocket_endpoint.y+.2), Vec(0.2, 1), Vec(0.1, 2), centre + Vec(0.3, -0.1)]))
@@ -311,22 +350,26 @@ with open("5Dodecahedra_AllUnitSheet.svg", "w") as f:
         2.88, AutoPocket(71.23, 1.5, extra=44.38), AutoPocket(41.47, 0.5)
     )
     symmetrical_unit = WireframeUnit(
-        3.34, AutoPocket(44.38, 0.6667, extra=59.07), AutoPocket(44.38, 0.6667, extra=59.07)
+        3.34,
+        AutoPocket(44.38, 0.6667, extra=59.07),
+        AutoPocket(44.38, 0.6667, extra=59.07),
     )
     small_tri_unit = WireframeUnit(
-        1.53, AutoPocket(59.07, 1, extra=71.23), AutoPocket(53.88, .6667)
+        1.53, AutoPocket(59.07, 1, extra=71.23), AutoPocket(53.88, 0.6667)
     )
 
     f.write(
         render_complex_sheet(
             [*([symmetrical_unit] * 3), *([large_tri_unit] * 6)],
-            [small_tri_unit]*8,
-            9 * 6/5,
-            8.12, #203mm
+            [small_tri_unit] * 8,
+            9 * 6 / 5,
+            8.12,  # 203mm
             svg.mm(25),
-            extra_vertical_units=[([symmetrical_unit] * 3, Vec(0, symmetrical_unit.length_ratio)),
-                                  ([large_tri_unit] * 6, Vec(3, large_tri_unit.length_ratio)),
-                                  ([small_tri_unit] * 4, Vec(3, large_tri_unit.length_ratio*2))]
+            extra_vertical_units=[
+                ([symmetrical_unit] * 3, Vec(0, symmetrical_unit.length_ratio)),
+                ([large_tri_unit] * 6, Vec(3, large_tri_unit.length_ratio)),
+                ([small_tri_unit] * 4, Vec(3, large_tri_unit.length_ratio * 2)),
+            ],
         ).as_str()
     )
 
@@ -342,10 +385,10 @@ with open("Flowers_WhirlSheet.svg", "w") as f:
         render_complex_sheet(
             [small_unit] * 10,
             [],
-            297/29,
-            210/29, #203mm
+            297 / 29,
+            210 / 29,  # 203mm
             svg.mm(29),
-            extra_vertical_units=[([large_unit] * 10, Vec(0, small_unit.length_ratio))]
+            extra_vertical_units=[([large_unit] * 10, Vec(0, small_unit.length_ratio))],
         ).as_str()
     )
 
@@ -356,12 +399,14 @@ with open("Flowers_PentagonSheet.svg", "w") as f:
 
     f.write(
         render_complex_sheet(
-            [pentagon_unit]*10,
+            [pentagon_unit] * 10,
             [],
-            297/29,
-            297/29, #203mm
+            297 / 29,
+            297 / 29,  # 203mm
             svg.mm(29),
-            extra_vertical_units=[([pentagon_unit]*10, Vec(0, pentagon_unit.length_ratio * i))
-                                  for i in range(1, 0)]
+            extra_vertical_units=[
+                ([pentagon_unit] * 10, Vec(0, pentagon_unit.length_ratio * i))
+                for i in range(1, 0)
+            ],
         ).as_str()
     )

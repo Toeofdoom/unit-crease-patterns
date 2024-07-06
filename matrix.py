@@ -41,13 +41,22 @@ def identity():
 
 def rotate_around_point(point: Vec, angle_degrees):
     a = math.radians(angle_degrees)
-    return Matrix(
+    return offset_by(point) @ Matrix(
         [
-            [math.cos(a), -math.sin(a), point.x * 2],
-            [math.sin(a), math.cos(a), point.y * 2],
+            [math.cos(a), -math.sin(a), 0],
+            [math.sin(a), math.cos(a), 0],
             [0, 0, 1],
-        ]
-    )
+        ] 
+    ) @ offset_by(-point)
+
+def scale_around_point(point: Vec, scaling_factor):
+    return offset_by(point) @ Matrix(
+        [
+            [scaling_factor, 0, 0],
+            [0, scaling_factor, 0],
+            [0, 0, 1],
+        ] 
+    ) @ offset_by(-point)
 
 
 def reflect_over_line(l: Line):

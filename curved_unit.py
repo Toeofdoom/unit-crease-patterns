@@ -304,12 +304,12 @@ class CreaseBezier:
 
 # Intended to be built up over several steps.
 class TransformStackUnit(BaseUnit):
-    def __init__(self, length_ratio: float):
+    def __init__(self, length_ratio: float, initial_transform : Matrix | None = None):
         # Could allow non-rectangles?
         self.zones = [
             TransformStackZone(
                 [Vec(0, 0), Vec(1, 0), Vec(1, length_ratio), Vec(0, length_ratio)],
-                identity(),
+                initial_transform or identity(),
             )
         ]
         self.symmetries = [identity()]
