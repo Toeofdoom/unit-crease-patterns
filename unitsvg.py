@@ -187,18 +187,19 @@ with open("transform_stack_unit.svg", "w") as f:
 
 with open("simplified_curved_unit.svg", "w") as f:
     ratio = 3.4
-    base_narrowing_multiplier = .95
+    base_narrowing_multiplier = 0.95
     centre = Vec(0.5, ratio * 0.5)
     adjustment_angle = math.atan((1 - base_narrowing_multiplier) / ratio)
     scaling_factor = 1 / math.cos(adjustment_angle)
-    narrowing_factor = scaling_factor * base_narrowing_multiplier / math.cos(adjustment_angle)
+    narrowing_factor = (
+        scaling_factor * base_narrowing_multiplier / math.cos(adjustment_angle)
+    )
     narrowed_ratio = ratio / narrowing_factor
     unit = TransformStackUnit(
         length_ratio=narrowed_ratio,
-        initial_transform=
-        offset_by(Vec(0, (narrowed_ratio - ratio) * 0.5)) @
-        scale_around_point(centre, scaling_factor/ narrowing_factor)
-        @ rotate_around_point(centre, math.degrees(-adjustment_angle))
+        initial_transform=offset_by(Vec(0, (narrowed_ratio - ratio) * 0.5))
+        @ scale_around_point(centre, scaling_factor / narrowing_factor)
+        @ rotate_around_point(centre, math.degrees(-adjustment_angle)),
     )
     unit.add_rotational_symmetry(centre)
     unit.add_fold(Line(Vec(0.25, 0), Vec(0.25, unit.length_ratio)), centre)
@@ -232,12 +233,14 @@ with open("simplified_curved_unit.svg", "w") as f:
     unit.add_simple_fold(reverse_pocket_line)
     unit.add_simple_fold(tab_line)
     unit.add_bezier_crease(
-        Bezier([pocket_endpoint, Vec(0.29, 1), Vec(0.16, 1.34), centre])
+        Bezier([pocket_endpoint, Vec(0.34, 0.8), Vec(0.16, 1.34), centre])
     )
 
     midpoint = centre + Vec(0.00, -0.1)
     dir = Vec(0.45, 0.55)
-    a = Bezier([pocket_endpoint, Vec(0.32, 1.25), midpoint - dir * 0.1, midpoint])
+    a = Bezier(
+        [pocket_endpoint + Vec(0, 0.25), Vec(0.35, 1), midpoint - dir * 0.2, midpoint]
+    )
     b = Bezier([midpoint, midpoint + dir * 0.25, Vec(0.68, 1.80), Vec(0.75, 1.85)])
     unit.add_bezier_crease(a)
     unit.add_bezier_crease(b)
@@ -246,7 +249,7 @@ with open("simplified_curved_unit.svg", "w") as f:
         Bezier(
             [
                 Vec(lerp(v.x, 0.75, shift), v.y)
-                for v, shift in zip(a.control_points, [0.5, 0.45, 0.4, 0.35])
+                for v, shift in zip(a.control_points, [0.5, 0.5, 0.5, 0.5])
             ]
         )
     )
@@ -254,7 +257,7 @@ with open("simplified_curved_unit.svg", "w") as f:
         Bezier(
             [
                 Vec(lerp(v.x, 0.75, shift), v.y)
-                for v, shift in zip(b.control_points, [0.35, 0.3, 0.3, 0.5])
+                for v, shift in zip(b.control_points, [0.5, 0.5, 0.5, 0.5])
             ]
         )
     )
@@ -264,6 +267,179 @@ with open("simplified_curved_unit.svg", "w") as f:
     unit.add_bezier_crease(Bezier([Vec(1.5, pocket_endpoint.y+.4), Vec(0.2, 1), Vec(0.1, 2.1), centre + Vec(0.6, -0.3)]))"""
 
     f.write(render_print_sheet(unit, 200, 6).as_str())
+
+
+with open("reversed_curved_unit.svg", "w") as f:
+    ratio = 3.6
+    base_narrowing_multiplier = 0.95
+    centre = Vec(0.5, ratio * 0.5)
+    adjustment_angle = math.atan((1 - base_narrowing_multiplier) / ratio)
+    scaling_factor = 1 / math.cos(adjustment_angle)
+    narrowing_factor = (
+        scaling_factor * base_narrowing_multiplier / math.cos(adjustment_angle)
+    )
+    narrowed_ratio = ratio / narrowing_factor
+    unit = TransformStackUnit(
+        length_ratio=narrowed_ratio,
+        initial_transform=offset_by(Vec(0, (narrowed_ratio - ratio) * 0.5))
+        @ scale_around_point(centre, scaling_factor / narrowing_factor)
+        @ rotate_around_point(centre, math.degrees(-adjustment_angle)),
+    )
+    unit.add_rotational_symmetry(centre)
+    unit.add_fold(Line(Vec(0.25, 0), Vec(0.25, unit.length_ratio)), centre)
+
+    pocket_angle = 35
+    reverse_pocket = 11
+    tab_angle = pocket_angle * 2 + reverse_pocket
+
+    pocket_direction = Vec(1, math.tan(math.radians(90 - pocket_angle)))
+
+    curve_endpoint = Vec(0.5, 0.1)
+    pocket_endpoint = curve_endpoint + pocket_direction * 0.25
+    pocket_line = Line(
+        curve_endpoint + Vec(0.0001, 0),
+        curve_endpoint + pocket_direction * 0.25,
+    )
+
+    tab_line = Line(
+        curve_endpoint - Vec(0.0001, 0),
+        curve_endpoint + Vec(-1, math.tan(math.radians(90 - tab_angle))) * 0.25,
+    )
+
+    reverse_pocket_direction = Vec(-1, math.tan(math.radians(90 - reverse_pocket)))
+    reverse_pocket_endpoint = curve_endpoint + reverse_pocket_direction * 0.25
+    reverse_pocket_line = Line(
+        curve_endpoint - Vec(0.0001, 0),
+        reverse_pocket_endpoint,
+    )
+
+    unit.add_fold(pocket_line, centre)
+    unit.add_simple_fold(reverse_pocket_line)
+    unit.add_simple_fold(tab_line)
+    unit.add_bezier_crease(
+        Bezier([pocket_endpoint, Vec(0.40, 0.8), Vec(0.16, 1.44), centre])
+    )
+
+    midpoint = centre + Vec(0.00, -0.1)
+    dir = Vec(0.45, 0.55)
+    a = Bezier(
+        [pocket_endpoint + Vec(0, 0.25), Vec(0.38, 1), midpoint - dir * 0.3, midpoint]
+    )
+    b = Bezier([midpoint, midpoint + dir * 0.55, Vec(0.68, 1.97), Vec(0.75, 2.05)])
+    unit.add_bezier_crease(a)
+    unit.add_bezier_crease(b)
+
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(lerp(v.x, 0.75, shift), v.y)
+                for v, shift in zip(a.control_points, [0.5, 0.5, 0.5, 0.5])
+            ]
+        )
+    )
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(lerp(v.x, 0.75, shift), v.y)
+                for v, shift in zip(b.control_points, [0.5, 0.5, 0.5, 0.5])
+            ]
+        )
+    )
+
+    """unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.2, 1), Vec(0.1, 1.8), centre]))
+    unit.add_bezier_crease(Bezier([Vec(1, pocket_endpoint.y+.2), Vec(0.2, 1), Vec(0.1, 2), centre + Vec(0.3, -0.1)]))
+    unit.add_bezier_crease(Bezier([Vec(1.5, pocket_endpoint.y+.4), Vec(0.2, 1), Vec(0.1, 2.1), centre + Vec(0.6, -0.3)]))"""
+
+    f.write(render_print_sheet(unit, 200, 8).as_str())
+
+
+with open("new_curved_unit.svg", "w") as f:
+    ratio = 5.5
+    base_narrowing_multiplier = 0.9
+    centre = Vec(0.5, ratio * 0.5)
+    adjustment_angle = math.atan((1 - base_narrowing_multiplier) / ratio)
+    scaling_factor = 1 / math.cos(adjustment_angle)
+    narrowing_factor = (
+        scaling_factor * base_narrowing_multiplier / math.cos(adjustment_angle)
+    )
+    narrowed_ratio = ratio / narrowing_factor
+    unit = TransformStackUnit(
+        length_ratio=narrowed_ratio,
+        initial_transform=offset_by(Vec(0, (narrowed_ratio - ratio) * 0.5))
+        @ scale_around_point(centre, scaling_factor / narrowing_factor)
+        @ rotate_around_point(centre, math.degrees(-adjustment_angle)),
+    )
+    unit.add_rotational_symmetry(centre)
+    unit.add_fold(Line(Vec(0.25, 0), Vec(0.25, unit.length_ratio)), centre)
+
+    pocket_angle = 50
+    reverse_pocket = 10
+    tab_angle = pocket_angle * 2 + reverse_pocket
+
+    pocket_direction = Vec(1, math.tan(math.radians(90 - pocket_angle)))
+
+    curve_endpoint = Vec(0.5, 0.2)
+    pocket_endpoint = curve_endpoint + pocket_direction * 0.25
+    pocket_line = Line(
+        curve_endpoint + Vec(0.0001, 0),
+        curve_endpoint + pocket_direction * 0.25,
+    )
+
+    tab_line = Line(
+        curve_endpoint - Vec(0.0001, 0),
+        curve_endpoint + Vec(-1, math.tan(math.radians(90 - tab_angle))) * 0.25,
+    )
+
+    reverse_pocket_direction = Vec(-1, math.tan(math.radians(90 - reverse_pocket)))
+    pocket_curve_section = 0.7
+    reverse_pocket_endpoint = curve_endpoint + reverse_pocket_direction * 0.25 * 0.3
+    reverse_pocket_line = Line(
+        curve_endpoint - Vec(0.0001, 0),
+        reverse_pocket_endpoint,
+    )
+
+    pocket_curve_length = 0.4
+    unit.add_fold(pocket_line, centre)
+    unit.add_simple_fold(reverse_pocket_line)
+    unit.add_bezier_crease(Bezier([reverse_pocket_endpoint, 
+                                   reverse_pocket_endpoint + reverse_pocket_direction.normalised * pocket_curve_length * 0.3, 
+                                   Vec(0.35, reverse_pocket_endpoint.y + pocket_curve_length * 0.8), 
+                                   Vec(0.25, reverse_pocket_endpoint.y + pocket_curve_length)]))
+    unit.add_simple_fold(tab_line)
+    unit.add_bezier_crease(
+        Bezier([pocket_endpoint, Vec(0.42, 0.7), Vec(0.16, 1.44), centre])
+    )
+
+    start_y = pocket_endpoint.y + 0.4
+    end_y = centre.y - 0.1
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(0.75, start_y),
+                Vec(0.3, lerp(start_y, end_y, 0.15)),
+                Vec(0.3, lerp(start_y, end_y, 0.5)),
+                Vec(0.75, end_y),
+            ]
+        )
+    )
+
+    start_y, end_y = (lerp(start_y, end_y, 0.15), lerp(end_y, start_y, 0.25))
+    unit.add_bezier_crease(
+        Bezier(
+            [
+                Vec(0.75, start_y),
+                Vec(0.4, lerp(start_y, end_y, 0.15)),
+                Vec(0.4, lerp(start_y, end_y, 0.5)),
+                Vec(0.75, end_y),
+            ]
+        )
+    )
+
+    """unit.add_bezier_crease(Bezier([pocket_endpoint, Vec(0.2, 1), Vec(0.1, 1.8), centre]))
+    unit.add_bezier_crease(Bezier([Vec(1, pocket_endpoint.y+.2), Vec(0.2, 1), Vec(0.1, 2), centre + Vec(0.3, -0.1)]))
+    unit.add_bezier_crease(Bezier([Vec(1.5, pocket_endpoint.y+.4), Vec(0.2, 1), Vec(0.1, 2.1), centre + Vec(0.6, -0.3)]))"""
+
+    f.write(render_print_sheet(unit, 200, 8).as_str())
 
 """with open("FiveTwistedTetrahedra.svg", "w") as f:
     unit1 = WireframeUnit(138/30, LongTabPocket(Frac(1, 5), 0, Frac(2, 3)), NormalPocket(0, Frac(1, 2), 2))

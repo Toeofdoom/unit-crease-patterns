@@ -232,8 +232,12 @@ class TransformStackZone:
                     intersection_verts.append(intersect)
 
         if len(intersection_verts) > 1:
-            # Need to pick flipped transform correctly!
-            return Line(*intersection_verts)
+            ts = [(intersect - line.v1).dot(line.direction.normalised) for intersect in intersection_verts]
+            start_t = max(0, min(ts))
+            end_t = min(line.length, max(ts))
+            if start_t > end_t:
+                return None
+            return Line(line.v1 + line.direction.normalised * start_t, line.v1 + line.direction.normalised * end_t)
         return None
 
     def clip_bezier(self, bezier: Bezier) -> list[Bezier]:
