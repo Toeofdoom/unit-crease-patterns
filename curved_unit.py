@@ -2,178 +2,9 @@ import math
 import svg
 from matrix import *
 from vec import Vec
-from line import Line
-from sheets import common_elements, BaseUnit
+from line import Line, lerp
+from sheets import BaseUnit
 from bezier import Bezier
-
-
-def lerp(a, b, n):
-    return b * n + (1 - n) * a
-
-
-class RectangularCurvedUnit:
-    def __init__(
-        self, length_ratio: float, end_angle: float, pocket_angle: float
-    ) -> None:
-        self.length_ratio = length_ratio
-        self.end_angle = end_angle
-        self.pocket_angle = pocket_angle
-
-    def height(self, width) -> float:
-        return self.length_ratio * width
-
-    def render(self, width) -> svg.SVG:
-        elements = [
-            *common_elements(),
-            svg.Rect(class_=["cut"], x=0, y=0, width=width, height="100%"),
-            self.render_elements(width, 0),
-        ]
-        return svg.SVG(width=width, height=self.height(width), elements=elements)
-
-    def render_sheet(self, width, unit_count):
-        elements = [
-            *common_elements(),
-            svg.Rect(class_=["cut"], x=0, y=0, width=width * unit_count, height="100%"),
-            *[
-                svg.Line(
-                    class_=["cut"],
-                    x1=i * width,
-                    y1=0,
-                    x2=i * width,
-                    y2="100%",
-                )
-                for i in range(1, unit_count)
-            ],
-        ]
-
-        for i in range(0, unit_count):
-            elements += self.render_elements(width, Vec(i * width, 0))
-
-        return svg.SVG(
-            width=width * unit_count,
-            height=width * self.length_ratio,
-            elements=elements,
-        )
-
-    def render_elements(self, width, offset: Vec):
-        height = self.height(width)
-        end_direction = Vec(1, math.tan(math.radians(self.end_angle)))
-        pocket_direction = Vec(1, math.tan(math.radians(90 - self.pocket_angle)))
-
-        def render_half(t):
-            curve_endpoint = end_direction * width * 0.5
-            pocket_endpoint = curve_endpoint + pocket_direction * width * 0.25
-            pocket_line = Line(
-                t
-                * (
-                    curve_endpoint
-                    + pocket_direction * (-curve_endpoint.y / pocket_direction.y)
-                ),
-                t * pocket_endpoint,
-            )
-            left_bookcase = Line(
-                t * Vec(width * 0.25, 0), t * Vec(width * 0.25, height * 0.5)
-            )
-            right_bookcase = Line(
-                t * Vec(width * 0.75, height * 0.5),
-                t * pocket_endpoint,
-            )
-
-            def render_curve(t, centre_x, end_x, y1, y2, centre_y):
-                return [
-                    svg.Path(  # Central curve
-                        class_=["valley"],
-                        d=[
-                            svg.MoveTo(*(t * Vec(end_x, y1))),
-                            svg.CubicBezier(
-                                **(
-                                    t
-                                    * Vec(
-                                        lerp(end_x, centre_x, 0.8),
-                                        lerp(y1, centre_y, 0.4),
-                                    )
-                                ).v1,
-                                **(t * Vec(centre_x, lerp(y1, centre_y, 0.7))).v2,
-                                **(t * Vec(centre_x, centre_y)),
-                            ),
-                            svg.CubicBezier(
-                                **(t * Vec(centre_x, lerp(centre_y, y2, 0.4))).v1,
-                                **(
-                                    t
-                                    * Vec(
-                                        lerp(end_x, centre_x, 0.8),
-                                        lerp(centre_y, y2, 0.8),
-                                    )
-                                ).v2,
-                                **(t * Vec(end_x, y2)),
-                            ),
-                        ],
-                    )
-                ]
-
-            curve_1 = Bezier(
-                [
-                    Vec(0.5 * width, curve_endpoint.y),
-                    Vec(-0.8 * width, height * 0.16),
-                    Vec(1.8 * width, height * 0.36),
-                    Vec(0.5 * width, height * 0.5),
-                ]
-            )
-
-            all_curves = [curve_1]
-            for line in [left_bookcase, right_bookcase]:
-                clipped_curves = []
-                for curve in all_curves:
-                    intercepts = curve.intersections(line)
-                    current_segment = curve
-                    last_intercept = 0.0
-                    for intercept in intercepts:
-                        before, after = current_segment.split_at(
-                            (intercept - last_intercept) / (1 - last_intercept)
-                        )
-                        last_intercept = intercept
-                        clipped_curves.append(before)
-                        current_segment = after
-                    clipped_curves.append(current_segment)
-                dir = line.v2 - line.v1
-                tangent = Vec(dir.y, -dir.x)
-                all_curves = [
-                    c for c in clipped_curves if (c.at(0.5) - line.v1).dot(tangent) > 0
-                ]
-
-            """def render_4th_curve(t):
-                return render_curve(
-                    t,
-                    0.59 * width,
-                    0.75 * width,
-                    pocket_endpoint.y + height * 0.16,
-                    height * 0.36,
-                    height * 0.32,
-                )"""
-
-            return [
-                svg.Line(
-                    class_=["valley"],
-                    **(t * Vec(pocket_endpoint.x, 0)).v1,
-                    **(t * pocket_endpoint).v2,
-                ),
-                svg.Line(class_=["valley"], **pocket_line),
-                svg.Line(
-                    class_=["valley"],
-                    **((t @ reflect_x_at(width * 0.75)) * curve_endpoint).v1,
-                    **(t * pocket_endpoint).v2,
-                ),
-                svg.Line(class_=["valley"], **left_bookcase),
-                svg.Line(class_=["valley"], **right_bookcase),
-                *[curve._render(width, t) for curve in all_curves],
-            ]
-
-        return [
-            *render_half(offset_by(offset)),
-            *render_half(
-                offset_by(offset) @ rotate_around_point(Vec(width, height) * 0.5, 180)
-            ),
-        ]
 
 
 class TransformStackZone:
@@ -232,12 +63,18 @@ class TransformStackZone:
                     intersection_verts.append(intersect)
 
         if len(intersection_verts) > 1:
-            ts = [(intersect - line.v1).dot(line.direction.normalised) for intersect in intersection_verts]
+            ts = [
+                (intersect - line.v1).dot(line.direction.normalised)
+                for intersect in intersection_verts
+            ]
             start_t = max(0, min(ts))
             end_t = min(line.length, max(ts))
             if start_t > end_t:
                 return None
-            return Line(line.v1 + line.direction.normalised * start_t, line.v1 + line.direction.normalised * end_t)
+            return Line(
+                line.v1 + line.direction.normalised * start_t,
+                line.v1 + line.direction.normalised * end_t,
+            )
         return None
 
     def clip_bezier(self, bezier: Bezier) -> list[Bezier]:
@@ -266,7 +103,7 @@ class CreaseLine:
     def __init__(self, line: Line):
         self.line = line
 
-    def render_elements(self, width: svg.Length, t: Vec | Matrix, with_hints=False):
+    def render_elements(self, width: float, t: Matrix, with_hints=False):
         transformed_line = Line(self.line.v1 * width, self.line.v2 * width)
         return [svg.Line(class_=["valley"], **(t * transformed_line))]
 
@@ -275,7 +112,7 @@ class CreaseBezier:
     def __init__(self, bezier: Bezier):
         self.bezier = bezier
 
-    def render_elements(self, width: svg.Length, t: Vec | Matrix, with_hints=False):
+    def render_elements(self, width: float, t: Matrix, with_hints=False):
         transformed_bezier: Bezier = t * Bezier(
             [v * width for v in self.bezier.control_points]
         )
@@ -308,7 +145,7 @@ class CreaseBezier:
 
 # Intended to be built up over several steps.
 class TransformStackUnit(BaseUnit):
-    def __init__(self, length_ratio: float, initial_transform : Matrix | None = None):
+    def __init__(self, length_ratio: float, initial_transform: Matrix | None = None):
         # Could allow non-rectangles?
         self.zones = [
             TransformStackZone(
@@ -370,7 +207,7 @@ class TransformStackUnit(BaseUnit):
                     for segment in zone.clip_bezier(zone.transform * symm_bezier)
                 ]
 
-    def render_elements(self, width: svg.Length, t: Vec | Matrix, with_hints=False):
+    def render_elements(self, width: float, t: Matrix, with_hints=False) -> list:
         return [
             element.render_elements(width, t, with_hints) for element in self.elements
         ]

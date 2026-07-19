@@ -1,8 +1,14 @@
 
+
+from typing import TYPE_CHECKING
+
 from vec import Vec
 import svg
 from line import Line
 import numpy
+
+if TYPE_CHECKING:
+    from matrix import Matrix
 
 class Bezier:
     def __init__(self, control_points: list[Vec]):
@@ -47,7 +53,7 @@ class Bezier:
 
 
 
-    def _render(self, width, t):
+    def _render(self, width, t : "Matrix"):
         #Only cubic implemented.
         return svg.Path(
             class_=["valley"],

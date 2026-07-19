@@ -2,7 +2,7 @@ import math
 from vec import Vec
 from line import Line
 from bezier import Bezier
-
+from typing import overload
 
 class Matrix:
     def __init__(self, data):
@@ -13,7 +13,19 @@ class Matrix:
         x, y, _ = [sum([a * b for a, b in zip(els, row)]) for row in self.data]
         return Vec(x, y)
 
-    def __mul__(self, other):
+    @overload
+    def __mul__(self, other: Vec) -> Vec:
+        ...
+
+    @overload
+    def __mul__(self, other: Line) -> Line:
+        ...
+
+    @overload
+    def __mul__(self, other: Bezier) -> Bezier:
+        ...
+
+    def __mul__(self, other: Line | Vec | Bezier) -> Line | Vec | Bezier:
         if type(other) is Vec:
             els = [other.x, other.y, 1]
             x, y, _ = [sum([a * b for a, b in zip(els, row)]) for row in self.data]
@@ -39,7 +51,7 @@ def identity():
     return Matrix([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
 
-def rotate_around_point(point: Vec, angle_degrees):
+def rotate_around_point(point: Vec, angle_degrees) -> Matrix:
     a = math.radians(angle_degrees)
     return offset_by(point) @ Matrix(
         [

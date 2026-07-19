@@ -1,6 +1,7 @@
 import math
 import svg
-svg.Length.__neg__ = lambda self: svg.Length(self.value, self.unit)
+from typing import overload
+svg.Length.__neg__ = lambda self: svg.Length(-self.value, self.unit)
 
 class Vec:
     def __init__(self, x, y):
@@ -15,7 +16,7 @@ class Vec:
         return math.sqrt(self.x * self.x + self.y * self.y)
     
     @property
-    def normalised(self) -> float:
+    def normalised(self) -> "Vec":
         return self * (1 / self.magnitude)
     
     def dot(self, other: "Vec") -> float:
@@ -24,7 +25,9 @@ class Vec:
     def __neg__(self):
         return Vec(-self.x, -self.y)
     
-    def __mul__(self, n: float):
+    
+    
+    def __mul__(self, n: float) -> "Vec":
         return Vec(self.x * n, self.y * n)
 
     def __add__(self, v: "Vec"):

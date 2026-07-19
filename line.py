@@ -1,5 +1,11 @@
 import math
+from typing import Any
 from vec import Vec
+
+
+def lerp(a, b, n):
+    return b * n + a * (1 - n)
+
 
 class Line:
     def __init__(self, v1: Vec, v2: Vec):
@@ -14,16 +20,16 @@ class Line:
     @property
     def direction(self):
         return self.v2 - self.v1
-    
+
     @property
     def tangent(self):
         dir = self.direction
         return Vec(dir.y, -dir.x)
-    
+
     @property
     def length(self):
         return (self.v2 - self.v1).magnitude
-    
+
     def intersection(self, other: "Line") -> Vec | None:
         xdiff = (self[0][0] - self[1][0], other[0][0] - other[1][0])
         ydiff = (self[0][1] - self[1][1], other[0][1] - other[1][1])
@@ -40,7 +46,7 @@ class Line:
         y = det(d, ydiff) / div
         return Vec(x, y)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         if key == 0:
             return self.v1
         if key == 1:
@@ -54,22 +60,18 @@ class Line:
         if key == "y2":
             return self.v2.y
         raise IndexError
-    
+
     def keys(self):
-        return ["x1","y1","x2","y2"]
+        return ["x1", "y1", "x2", "y2"]
 
     def __len__(self):
         return 2
 
     def __repr__(self):
         return f"({self.v1}, {self.v2})"
-    
+
     def as_vec_d(self) -> tuple[Vec, float]:
-        y = (self.v2.x - self.v1.x)
+        y = self.v2.x - self.v1.x
         x = -(self.v2.y - self.v1.y)
-        d = y * self.v1.y + self.v1.x*x
+        d = y * self.v1.y + self.v1.x * x
         return Vec(x, y), d
-
-    
-
-

@@ -1,18 +1,20 @@
 import math
 import svg
 from vec import Vec
-from line import Line
+from line import Line, lerp
+
 
 class AutoPocket:
-    def __init__(self, angle_degrees, con, extra=None):
+    def __init__(self, angle_degrees, con, extra=None, double_extra=True):
         self.angle_radians = math.radians(angle_degrees)
         self.inv_angle_radians = math.radians(90 - angle_degrees)
         self.con = con
         self.inv_extra_angle_radians = []
         if extra:
-            self.inv_extra_angle_radians.append(
-                math.radians(90 - extra) if extra else None
-            )
+            if double_extra:
+                self.inv_extra_angle_radians.append(
+                    math.radians(90 - extra) if extra else None
+                )
             self.inv_extra_angle_radians.append(math.radians(90 - extra * 2))
         self.hints = []
 
@@ -27,10 +29,14 @@ class AutoPocket:
 
         pocket_vert = t * Vec(width * end_x, width * end_y)
 
+        c = t * Vec(width * start_x, svg.mm(0))
+        if start_x < 0:
+            c = lerp(c, pocket_vert, start_x / (start_x - end_x))
+
         lines = [
             svg.Line(
                 class_=["valley"],
-                **(Line(t * Vec(width * start_x, svg.mm(0)), pocket_vert)),
+                **(Line(c, pocket_vert)),
             ),
             svg.Line(
                 class_=["valley"],
@@ -51,11 +57,21 @@ class AutoPocket:
             lines += [
                 svg.Line(
                     class_=["valley"],
-                    **(Line(t * Vec(width * mid_x, width * mid_y), t * Vec(width * (0.5 - extra_x), width * extra_y))),
+                    **(
+                        Line(
+                            t * Vec(width * mid_x, width * mid_y),
+                            t * Vec(width * (0.5 - extra_x), width * extra_y),
+                        )
+                    ),
                 ),
                 svg.Line(
                     class_=["valley"],
-                    **(Line(t * Vec(width * extra_x, width * extra_y), t * Vec(svg.mm(0), width * mid_y))),
+                    **(
+                        Line(
+                            t * Vec(width * extra_x, width * extra_y),
+                            t * Vec(svg.mm(0), width * mid_y),
+                        )
+                    ),
                 ),
             ]
 
